@@ -1189,7 +1189,7 @@ class Archiver:
         listing = []
         for manifest_entry in repository.historical_manifests():
             manifest, _ = Manifest.load(repository, (Manifest.Operation.READ,),
-                                        key=key, cdata=manifest_entry)
+                                        key=key, chunk_data=manifest_entry)
             listing.append([a.name for a in manifest.archives.list()])
         print(listing)
         return self.exit_code

@@ -171,15 +171,15 @@ class Manifest:
         return parse_timestamp(self.timestamp, tzinfo=None)
 
     @classmethod
-    def load(cls, repository, operations, key=None, force_tam_not_required=False, cdata=None):
+    def load(cls, repository, operations, key=None, force_tam_not_required=False, chunk_data=None):
         from ..item import ManifestItem
         from ..crypto.key import key_factory, tam_required_file, tam_required
         from ..repository import Repository
         try:
-            if cdata is None:
-                cdata = repository.get(cls.MANIFEST_ID)
+            cdata = chunk_data or repository.get(cls.MANIFEST_ID)
         except Repository.ObjectNotFound:
             raise NoManifestError
+        del chunk_data
         if not key:
             key = key_factory(repository, cdata)
         manifest = cls(key, repository)
