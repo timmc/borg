@@ -1183,6 +1183,17 @@ class Archiver:
         cache.commit()
         return self.exit_code
 
+    @with_repository(compatibility=(Manifest.Operation.CHECK,))
+    def do_history(self, args, repository, manifest, key):
+        """Show history of repository"""
+        listing = []
+        for manifest_entry in repository.historical_manifests():
+            manifest, _ = Manifest.load(repository, (Manifest.Operation.READ,),
+                                        key=key, cdata=manifest_entry)
+            listing.append([a.name for a in manifest.archives.list()])
+        print(listing)
+        return self.exit_code
+
     @with_repository(exclusive=True, manifest=False)
     def do_delete(self, args, repository):
         """Delete an existing repository or archives"""
@@ -4354,6 +4365,20 @@ class Archiver:
         subparser.add_argument('name', metavar='NEWNAME',
                                type=archivename_validator(),
                                help='the new archive name to use')
+
+        # borg history
+        history_epilog = process_epilog("""
+        This command shows historical values from the repository.
+        """)
+        subparser = subparsers.add_parser('history', parents=[common_parser], add_help=False,
+                                          description=self.do_history.__doc__,
+                                          epilog = history_epilog,
+                                          formatter_class=argparse.RawDescriptionHelpFormatter,
+                                          help='show repository history')
+        subparser.set_defaults(func=self.do_history)
+        subparser.add_argument('location', metavar='REPOSITORY', nargs='?', default='',
+                               type=location_validator(archive=False),
+                               help='repository to list history from')
 
         # borg serve
         serve_epilog = process_epilog("""

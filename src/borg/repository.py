@@ -1067,6 +1067,20 @@ class Repository:
             logger.info('Finished %s repository check, no problems found.', mode)
         return not error_found or repair
 
+    def historical_manifests(self):
+        """Retrieve all manifest entries, ending with current one."""
+        manifest_entries = []
+        segment_count = sum(1 for _ in self.io.segment_iterator())
+        pi = ProgressIndicatorPercent(total=segment_count, msg='Reading segments %3.1f%%', step=0.1,
+                                      msgid='repository.historical_manifests')
+        for i, (segment, filename) in enumerate(self.io.segment_iterator()):
+            pi.show(i)
+            for (tag, id, offset, size) in self.io.iter_objects(segment, read_data=False):
+                if id == Manifest.MANIFEST_ID and tag == TAG_PUT:
+                    manifest_entries.append(self.io.read(segment, offset, Manifest.MANIFEST_ID))
+        pi.finish()
+        return manifest_entries
+
     def scan_low_level(self):
         """Very low level scan over all segment file entries.
 
