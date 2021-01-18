@@ -998,7 +998,6 @@ class Repository:
         t_start = time.monotonic()
         pi = ProgressIndicatorPercent(total=segment_count, msg='Checking segments %3.1f%%', step=0.1,
                                       msgid='repository.check')
-        from .crypto.key import key_factory
         for i, (segment, filename) in enumerate(self.io.segment_iterator()):
             pi.show(i)
             if segment <= last_segment_checked:
@@ -1008,12 +1007,6 @@ class Repository:
             logger.debug('checking segment file %s...', filename)
             try:
                 objects = list(self.io.iter_objects(segment))
-                for o in objects:
-                    if o[1] == Manifest.MANIFEST_ID and o[0] == TAG_PUT:
-                        encr_manifest = self.io.read(segment, o[2], Manifest.MANIFEST_ID)
-                        ckey = key_factory(self, encr_manifest)
-                        decr_manifest = ckey.decrypt(None, encr_manifest)
-                        print(sorted(k for k, v in ckey.unpack_and_verify_manifest(decr_manifest)[0][b'archives'].items()))
             except IntegrityError as err:
                 report_error(str(err))
                 objects = []
